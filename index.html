@@ -1,20 +1,65 @@
-<head>
-  <!-- Load the ArcGIS Maps SDK for JavaScript from CDN -->
-  <script type="module" src="https://js.arcgis.com/5.1/"></script>
-  <style>
-    html,
-    body {
-      height: 100%;
-      margin: 0;
-    }
-  </style><!-- Load the CSS for the widgets -->
-</head>
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <title>Simulador de móvil - Obligatorio 2 SIG</title>
 
+    <script src="config.js"></script>
+    <script type="module" src="https://js.arcgis.com/5.1/"></script>
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+      }
+    </style>
+  </head>
 
-<body class="calcite-mode-dark">
-  <!-- There is no need to programmatically set the basemap, extent or zoom -->
-  <!-- All this information comes from the WebMap -->
-  <arcgis-map item-id="02b37471d5d84cacbebcccd785460e94">
-    <arcgis-zoom slot="top-left"></arcgis-zoom>
-  </arcgis-map>
-</body>
+  <body>
+    <arcgis-map center="-98, 39" zoom="5">
+      <arcgis-directions slot="top-right"></arcgis-directions>
+    </arcgis-map>
+
+    <script type="module">
+      const [RouteLayer, Basemap, TileLayer] = await $arcgis.import([
+        "@arcgis/core/layers/RouteLayer.js",
+        "@arcgis/core/Basemap.js",
+        "@arcgis/core/layers/TileLayer.js",
+      ]);
+
+      const viewElement = document.querySelector("arcgis-map");
+      const directionsElement = document.querySelector("arcgis-directions");
+
+      // Mapa base 
+      viewElement.basemap = new Basemap({
+        baseLayers: [
+          new TileLayer({
+            url: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer",
+          }),
+        ],
+      });
+
+      const routeLayer = new RouteLayer({});
+
+      await viewElement.viewOnReady();
+      await directionsElement.componentOnReady();
+      await routeLayer.load();
+
+      // Capa de ruta propia, asociada al componente y agregada al mapa
+      directionsElement.layer = routeLayer;
+      viewElement.map.add(routeLayer);
+
+      directionsElement.addEventListener("arcgisPropertyChange", (e) => {
+        console.log(e.detail);
+        if (e.detail.name === "lastRoute") {
+          // En STOPS aparecen las paradas de la ruta, tienen campo 'name' legible como lo que se muestra en pantalla, geometry es Point
+          // La ruta tiene geometry Polyline, y dentro de geometry tiene el campo paths, que muestra todos los segmentos, curvas, y coordenadas de giros de la ruta
+          // Tiene tantos paths como segmentos entre stops, y dentro de cada path tiene subsegmentos por cada linea entre dos puntos de giro
+          // tambien el campo spatialReference determina que sus coordenadas son de tipo webMercator (investigar más sobre esto)
+          console.log(routeLayer.routeInfo, routeLayer.stops.toArray()); // esto es para ver los datos, luego decidir como guardarlos
+        }
+      });
+    </script>
+  </body>
+</html>
