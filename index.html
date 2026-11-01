@@ -50,14 +50,21 @@
       directionsElement.layer = routeLayer;
       viewElement.map.add(routeLayer);
 
+      
+
       directionsElement.addEventListener("arcgisPropertyChange", (e) => {
-        console.log(e.detail);
         if (e.detail.name === "lastRoute") {
           // En STOPS aparecen las paradas de la ruta, tienen campo 'name' legible como lo que se muestra en pantalla, geometry es Point
           // La ruta tiene geometry Polyline, y dentro de geometry tiene el campo paths, que muestra todos los segmentos, curvas, y coordenadas de giros de la ruta
           // Tiene tantos paths como segmentos entre stops, y dentro de cada path tiene subsegmentos por cada linea entre dos puntos de giro
           // tambien el campo spatialReference determina que sus coordenadas son de tipo webMercator (investigar más sobre esto)
-          console.log(routeLayer.routeInfo, routeLayer.stops.toArray()); // esto es para ver los datos, luego decidir como guardarlos
+          const route = routeLayer.routeInfo
+          const stops = routeLayer.stops.toArray()
+          stops.forEach(element => {
+            if (element.name !== '') {
+              console.log(stops.indexOf(element),element.name, element.geometry)
+            }
+          })
         }
       });
     </script>
