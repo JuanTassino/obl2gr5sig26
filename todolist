@@ -1,5 +1,19 @@
 -Verificar servicios LISTO
 -Generar APIKEY JUAN LISTO
 -Generar rutas de más de 2 puntos LISTO
--Ver como guardar los STOPS 
--Ver como guardar los puntos y las rutas
+-Ver como guardar los STOPS LISTO
+  -Se guardan usando https://sampleserver5.arcgisonline.com/arcgis/rest/services/LocalGovernment/Events/FeatureServer
+  -Tiene solo capa 0 (Events), y ahi guardamos las paradas elegidas
+-Ver como guardar los puntos y las rutas LISTO
+  -Se guardan usando https://sampleserver5.arcgisonline.com/arcgis/rest/services/LocalGovernment/Recreation/FeatureServer
+  -Tiene: capa 0 (Facilities, puntos), la capa 1 (Trails, lineas) y la capa 2 (Recreational Area, polígonos)
+  -Usamos la capa 1 para almacenar las rutas
+-Como diferenciar nuestros registros del resto de los grupos? Id que comienza con '52026' ?
+-Definir relación entre Stops y Rutas, qué pasa con los Trails (rutas) si eliminamos los Events (puntos)?
+
+
+
+-URL para consultar eventos
+https://sampleserver5.arcgisonline.com/arcgis/rest/services/LocalGovernment/Events/FeatureServer/0/query?where=eventid+%3D+52026&objectIds=&time=&geometry=&geometryType=esriGeometryPoint&inSR=&spatialRel=esriSpatialRelIntersects&distance=&units=esriSRUnit_Foot&relationParam=&outFields=*&returnGeometry=true&maxAllowableOffset=&geometryPrecision=&outSR=&havingClause=&gdbVersion=&historicMoment=&returnDistinctValues=false&returnIdsOnly=false&returnCountOnly=false&returnExtentOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&multipatchOption=xyFootprint&resultOffset=&resultRecordCount=&returnTrueCurves=false&returnExceededLimitFeatures=false&quantizationParameters=&returnCentroid=false&timeReferenceUnknownClient=false&sqlFormat=none&resultType=&featureEncoding=esriDefault&datumTransformation=&f=html
+-URL para consultar rutas
+https://sampleserver5.arcgisonline.com/arcgis/rest/services/LocalGovernment/Recreation/FeatureServer/1/query?where=notes+LIKE+%27grupo5_2026%7C%25%27&objectIds=&time=&geometry=&geometryType=esriGeometryPolyline&inSR=&spatialRel=esriSpatialRelIntersects&distance=&units=esriSRUnit_Foot&relationParam=&outFields=*&returnGeometry=true&maxAllowableOffset=&geometryPrecision=&outSR=&havingClause=&gdbVersion=&historicMoment=&returnDistinctValues=false&returnIdsOnly=false&returnCountOnly=false&returnExtentOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&multipatchOption=xyFootprint&resultOffset=&resultRecordCount=&returnTrueCurves=false&returnExceededLimitFeatures=false&quantizationParameters=&returnCentroid=false&timeReferenceUnknownClient=false&sqlFormat=none&resultType=&featureEncoding=esriDefault&datumTransformation=&f=html
