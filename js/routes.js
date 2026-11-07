@@ -1,4 +1,5 @@
 import { ruta_prefix, trails_url } from "./const.js";
+import { crearRuta } from "./state.js";
 
 const [Graphic, Polyline, webMercatorUtils, Stop] = await $arcgis.import([
   "@arcgis/core/Graphic.js",
@@ -42,39 +43,59 @@ async function guardarRuta(idsEventos, routeLayer, trailsLayer) {
   return r.objectId
 }
 
-async function cargarRutaEnEditor({ ruta, eventosLayer, routeLayer, directionsElement }) {
-  const [, nombre, listaIds] = ruta.attributes.notes.split("|");
-    const ids = listaIds
-    .split(",")
-    .map((s) => Number(s.trim()))
+function cargarParadasEnComponente(paradas, routeLayer) {
+  routeLayer.stops.removeAll();
+  paradas.forEach((p) => {
+    routeLayer.stops.add(new Stop({ name: p.nombre, geometry: p.geometria }));
+  });
+}
+
+export async function obtenerRutaGuardada(idRuta, { trailsLayer, eventosLayer }) {
+  // 1. La ruta completa, por id (no la del gráfico del clic, que viene simplificada)
+  const resRuta = await trailsLayer.queryFeatures({
+    objectIds: [idRuta],
+    outFields: ["*"],
+    returnGeometry: true,
+  });
+  const trail = resRuta.features[0];
+  if (!trail) throw new Error("La ruta ya no existe en el servicio.");
+
+  // 2. Leer notes: prefijo|nombre|id1,id2,...
+  const partes = (trail.attributes.notes ?? "").split("|");
+  if (partes.length < 3) throw new Error("El campo notes de la ruta no tiene el formato esperado.");
+  const nombre = partes[1];
+  const ids = partes[2].split(",").map((s) => Number(s.trim()))
     .filter((n) => Number.isInteger(n) && n > 0);
+  if (ids.length === 0) throw new Error("La ruta no tiene eventos válidos.");
 
-  if (ids.length === 0) return;
-
-  console.log("notes:", ruta.attributes.notes, "ids:", ids);
-
-  const res = await eventosLayer.queryFeatures({
+  // 3. Sus eventos, reordenados según la lista guardada
+  const resEv = await eventosLayer.queryFeatures({
     objectIds: ids,
     outFields: ["*"],
     returnGeometry: true,
   });
+  const campoId = eventosLayer.objectIdField;      // evita errores de mayúsculas
+  const porId = new Map(resEv.features.map((f) => [f.attributes[campoId], f]));
 
-  // El servicio no garantiza el orden: se reordena según la lista guardada
-  const porId = new Map(res.features.map((f) => [f.attributes.objectid, f]));
-  const eventos = ids.map((id) => porId.get(id)).filter(Boolean);
+  const paradas = ids
+    .map((id) => porId.get(id))
+    .filter(Boolean)                               // saltea eventos que ya no existen
+    .map((ev) => ({
+      idEvento: ev.attributes[campoId],
+      nombre: ev.attributes.description,
+      tipoEvento: ev.attributes.event_type,
+      geometria: webMercatorUtils.geographicToWebMercator(ev.geometry),
+    }));
 
-  if (eventos.length < ids.length) {
-    // TODO: avisar al usuario que faltan eventos
-  }
-  if (eventos.length < 2) return;
-
-  routeLayer.stops.removeAll();
-  eventos.forEach((ev) => {
-    routeLayer.stops.add(
-      new Stop({ name: ev.attributes.description, geometry: ev.geometry })
-    );
+  const ruta = crearRuta({
+    origen: "guardada",
+    idRuta,
+    nombre,
+    paradas,
+    polilinea: webMercatorUtils.geographicToWebMercator(trail.geometry),
   });
-  await directionsElement.getDirections();
+  ruta.completa = paradas.length === ids.length;   // false si faltan eventos
+  return ruta;
 }
 
-export { guardarRuta, cargarRutaEnEditor };
+export { guardarRuta, cargarParadasEnComponente};

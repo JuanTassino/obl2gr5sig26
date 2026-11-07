@@ -31,7 +31,7 @@ function paradaAGraphic(parada, indice) {
     geometry: punto,
     attributes: {
       description: (parada.name ?? `Parada ${indice+1}`).slice(0,50),
-      event_type: 5, // ToDo: el tipo elegido por el usuario (? ver como resolver) 
+      event_type: 5, // TODO: el tipo elegido por el usuario (? ver como resolver) 
       eventid: event_id,
       eventdate: Date.now(),
     },
