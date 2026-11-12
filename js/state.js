@@ -24,7 +24,13 @@ function crearRuta({ origen, idRuta = null, nombre, paradas, polilinea }) {
     polilinea,                      // en Web Mercator
     modificada: false,
     original: { paradas: [...paradas], polilinea },   // para "descartar cambios"
+    base: null,
   };
 }
 
-export { estado, setRutaActual, crearRuta, suscribir };
+function setModo(modo) {
+  estado.modo = modo;
+  oyentes.forEach((fn) => fn(estado));   // avisa a quien muestre u oculte cosas según el modo
+}
+
+export { estado, setRutaActual, crearRuta, suscribir, setModo };

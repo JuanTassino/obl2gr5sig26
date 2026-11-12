@@ -8,39 +8,31 @@ const [Graphic, Polyline, webMercatorUtils, Stop] = await $arcgis.import([
   "@arcgis/core/rest/support/Stop.js",
 ]);
 
-async function guardarRuta(idsEventos, routeLayer, trailsLayer) {
-  const geometriaWM = routeLayer.routeInfo?.geometry;
-  if (!geometriaWM) throw new Error("Todavía no hay una ruta calculada.");
-
-  // 1. A grados (4326)
-  const geo = webMercatorUtils.webMercatorToGeographic(geometriaWM);
-
-  // 2. Reconstruir solo con x,y, por si la geometría trae Z o M (la capa no los admite)
+async function guardarRuta(ruta, idsEventos, trailsLayer) {
+  // Web Mercator -> grados, y solo x,y (la capa no admite Z ni M)
+  const geo = webMercatorUtils.webMercatorToGeographic(ruta.polilinea);
   const linea = new Polyline({
     paths: geo.paths.map((trazo) => trazo.map((v) => [v[0], v[1]])),
     spatialReference: { wkid: 4326 },
   });
 
-  // 3. Atributos: marca | nombre | ids de eventos en orden de visita
-  const listaIds = idsEventos.join(",");
-  const nombre = "Ruta de prueba";  // Cambiar por un nombre que ingresa el usuario ???
-  const notes = `${ruta_prefix}|${nombre.slice(0, 40)}|${listaIds}`;
-  if (notes.length > 255) {
-    throw new Error("La ruta tiene demasiados eventos para el campo notes.");
+  const notes = `${ruta_prefix}|${ruta.nombre.slice(0, 40)}|${idsEventos.join(",")}`;
+  if (notes.length > 255) throw new Error("La ruta tiene demasiados eventos para el campo notes.");
+
+  let resultado;
+  try {
+    resultado = await trailsLayer.applyEdits({ addFeatures:  [new Graphic({ geometry: linea, attributes: { notes, trailtype: 4 } })], });
+  } catch (e) {
+    console.error("applyEdits falló:", e.message, e.details);
+    throw e;
   }
-
+  /*
   const resultado = await trailsLayer.applyEdits({
-    addFeatures: [
-      new Graphic({
-        geometry: linea,
-        attributes: { notes, trailtype: 4, recordedon: Date.now() },
-      }),
-    ],
-  });
-
+    addFeatures: [new Graphic({ geometry: linea, attributes: { notes, trailtype: 4, recordedon: new Date() } })],
+  });*/
   const r = resultado.addFeatureResults[0];
   if (r.error) throw new Error(r.error.message);
-  return r.objectId
+  return r.objectId;
 }
 
 function cargarParadasEnComponente(paradas, routeLayer) {
@@ -50,7 +42,7 @@ function cargarParadasEnComponente(paradas, routeLayer) {
   });
 }
 
-export async function obtenerRutaGuardada(idRuta, { trailsLayer, eventosLayer }) {
+async function obtenerRutaGuardada(idRuta, { trailsLayer, eventosLayer }) {
   // 1. La ruta completa, por id (no la del gráfico del clic, que viene simplificada)
   const resRuta = await trailsLayer.queryFeatures({
     objectIds: [idRuta],
@@ -98,4 +90,25 @@ export async function obtenerRutaGuardada(idRuta, { trailsLayer, eventosLayer })
   return ruta;
 }
 
-export { guardarRuta, cargarParadasEnComponente};
+
+function rutaDesdeComponente(routeLayer, nombre = "Ruta nueva") {
+  const geometria = routeLayer.routeInfo?.geometry;
+  if (!geometria) return null;
+
+  const paradas = routeLayer.stops.toArray()
+    .filter((p) => p.geometry)                      // descarta las vacías
+    .map((p) => ({
+      idEvento: null,                               // todavía no es un evento guardado
+      nombre: p.name,
+      tipoEvento: 5,                                // TODO: el que elija el usuario
+      geometria: p.geometry,
+    }));
+  if (paradas.length < 2) return null;
+
+  const ruta = crearRuta({ origen: "calculada", nombre, paradas, polilinea: geometria });
+  ruta.modificada = true;
+  return ruta;
+}
+
+
+export { guardarRuta, cargarParadasEnComponente, obtenerRutaGuardada, rutaDesdeComponente };

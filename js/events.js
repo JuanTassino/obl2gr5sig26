@@ -38,4 +38,8 @@ function paradaAGraphic(parada, indice) {
   });
 }
 
-export { guardarEventos };
+async function borrarEventosPorIds(ids) {
+  await eventosLayer.applyEdits({ deleteFeatures: ids.map((objectId) => ({ objectId })) });
+}
+
+export { guardarEventos, borrarEventosPorIds };

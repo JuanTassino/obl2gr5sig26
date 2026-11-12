@@ -20,3 +20,6 @@ https://sampleserver5.arcgisonline.com/arcgis/rest/services/LocalGovernment/Recr
 
 -La diferencia entre las rutas guardadas y las calculadas se debe al estado actual de las calles?
 -Suele pasar dentro de ciudades, en calles internas y no en rutas nacionales, no suelen ser cambios grandes pero son cambios
+
+-Preparar varias simulaciones con parametros distintos (radio y velocidad) y ver como funciona NTH
+-Ver exportacion PDF

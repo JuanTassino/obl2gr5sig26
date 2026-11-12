@@ -13,12 +13,57 @@
 
   <body>
     <arcgis-map center="-98, 39" zoom="5">
+
       <arcgis-directions slot="top-right"></arcgis-directions>
-      <calcite-panel slot="top-left" heading="Ruta">
-        <calcite-button id="btn-iniciar">Iniciar simulación</calcite-button>
-        <calcite-button id="btn-rutas">Borrar rutas</calcite-button>
-        <calcite-button id="btn-todo">Borrar todo</calcite-button>
+
+      <calcite-panel slot="bottom-right" heading="Ruta" style="width:220px">
+        <div style="padding:12px; display:flex; flex-direction:column; gap:8px;">
+          <calcite-button id="btn-guardar" width="full">Guardar como nueva</calcite-button>
+          <calcite-button id="btn-descartar" width="full" appearance="outline" kind="neutral">Descartar modificaciones</calcite-button>
+          <calcite-button id="btn-nueva" width="full" appearance="outline" kind="neutral">Limpiar ruta y paradas</calcite-button>
+          <calcite-button id="btn-iniciar" width="full">Iniciar simulación</calcite-button>
+        </div>
       </calcite-panel>
+    
+      <calcite-panel id="panel-sim" slot="bottom-left" heading="Simulación en curso" style="width:280px; display:none">
+        <div style="padding:12px; display:flex; flex-direction:column; gap:8px;">
+          <calcite-progress id="sim-barra" type="determinate" value="0"></calcite-progress>
+          <div>Avance: <b id="sim-progreso">-</b></div>
+          <div>Velocidad: <b id="sim-velocidad">-</b> km/h</div>
+          <div>Estado: <b id="sim-estado">-</b></div>
+          <div>Población en el buffer: <b id="sim-poblacion">-</b></div>
+          <calcite-button id="btn-detener" kind="danger" width="full">Detener</calcite-button>
+        </div>
+      </calcite-panel>
+
+      <calcite-panel slot="top-left" heading="Configuración" style="width:260px">
+        <div style="padding:12px; display:flex; flex-direction:column; gap:12px;">
+          <calcite-label>Radio del buffer (km)
+            <calcite-slider id="inp-radio" min="5" max="100" value="30" step="5" snap label-handles></calcite-slider>
+          </calcite-label>
+          <calcite-label>Velocidad media (km/h)
+            <calcite-slider id="inp-vel" min="30" max="130" value="80" step="5" snap label-handles></calcite-slider>
+          </calcite-label>
+          <calcite-label>Aceleración
+            <calcite-select id="sel-acel">
+              <calcite-option value="200">x200</calcite-option>
+              <calcite-option value="1000" selected>x1000</calcite-option>
+              <calcite-option value="5000">x5000</calcite-option>
+            </calcite-select>
+          </calcite-label>
+          <calcite-label>Tipo de evento
+            <calcite-select id="sel-tipo">
+              <calcite-option value="0">Festival de arte</calcite-option>
+              <calcite-option value="1">Feria de productores</calcite-option>
+              <calcite-option value="2">Noche de cine</calcite-option>
+              <calcite-option value="3">Feria</calcite-option>
+              <calcite-option value="4">Desfile</calcite-option>
+              <calcite-option value="5" selected>Otro</calcite-option>
+            </calcite-select>
+          </calcite-label>
+        </div>
+      </calcite-panel>
+
     </arcgis-map>
   </body>
 </html>
