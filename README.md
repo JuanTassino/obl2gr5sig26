@@ -1,20 +1,61 @@
--Levantar un servidor HTTP mediante el siguiente comando
+# Simulador de móvil con análisis demográfico – Obligatorio 2, Introducción a los SIG (2026)
+
+Aplicación web (ArcGIS Maps SDK for JavaScript 5.1) que simula un móvil recorriendo una ruta por EE. UU. y calcula, en cada posición, la población que queda dentro de un radio de búsqueda (buffer).
+
+## Requisitos
+
+- Navegador moderno y conexión a internet.
+- Python 3 (o cualquier servidor HTTP estático).
+- Una cuenta de ArcGIS con una API key habilitada para geocodificación y ruteo.
+
+## Configuración
+
+1. Copiar `config.example.js` como `config.js`.
+2. Pegar la API key propia en `config.js`. Este archivo no se sube al repositorio.
+
+## Ejecución
+
+Desde la carpeta que contiene `index.html`:
+
+```
 python -m http.server
--Iniciar la aplicación en localhost, en el puerto 8000
-http://localhost:8000
--El mapa muestar las rutas guardadas
--También permite ingresar paradas y calcular una ruta nueva
--Las rutas guardadas con sus correspondientes paradas pueden simularse como fueron almacenadas y permite intercambiar el orden, agregar o eliminar paradas, recalculando la ruta nuevamente
--El control de ruteo es donde se ingresan las paradas y la ruta es calculada
--El control de configuración permite elegir una velocidad media, un radio para el buffer y una aceleración de simulación
--Tambien muestra un listado de todos los eventos almacenados junto con su 'event_type', y permite la eliminación de 
--El control de principal permite guardar nuevas rutas, descartar modificaciones hechas sobre rutas guardadas, limpiar la ruta y paradas en el controlador de ruteo, exportar el mapa a pdf e iniciar la simulacion
--El control de zoom permite modificar con mayor precision la escala de la vista sobre el mapa
+```
 
--Una vez iniciada la simulacion, se muestra el estado actual de la simulacion
--Este el progreso de la simulacion, la velocidad actual (con referencia a lo seleccionado), el estado de EEUU en el que se encuentra actualmente y la poblacion que es alcanzada por el buffer
--Durante la simulacion, se marca el radio seleccionado, pintandose los condados que son intersectados y utilizados para calcular la poblacion del buffer
--Al atravesar de un estado a otro, se marca el hito en el mapa con una figura y se muestra el nombre del nuevo estado
--Cuando la simulacion finaliza se muestra un resumen de la misma, mostrando kilometros recorridos, velocidad promedio, poblacion media, lecturas realizadas y una lista de los estados visitados
+Abrir http://localhost:8000 (no abrir el archivo con doble clic: el navegador lo bloquea).
 
--En todo momento se puede exportar el mapa en su estado actual a pdf
+## Uso
+
+### Mapa y rutas guardadas
+- El mapa muestra las rutas guardadas. Al hacer clic en una, se carga con sus paradas (naranja = guardada, celeste = calculada sin guardar).
+- Una ruta guardada se simula tal como fue almacenada, sin recalcularla.
+
+### Panel de ruteo
+- Permite ingresar paradas (buscador o clic en el mapa), reordenarlas, agregarlas o quitarlas. La ruta se recalcula con cada cambio.
+- Solo se aceptan paradas dentro de EE. UU.
+
+### Panel "Ruta"
+- **Guardar como nueva**: guarda la ruta y sus paradas (como eventos); pide un nombre.
+- **Descartar cambios**: vuelve a la ruta guardada original.
+- **Nueva ruta**: limpia la ruta y las paradas.
+- **Iniciar simulación**: si la ruta no está guardada, ofrece guardarla antes.
+- **Exportar a PDF**: disponible antes y después de simular.
+
+### Panel "Configuración"
+- Radio del buffer, velocidad media y aceleración de la simulación (se pueden cambiar durante la simulación).
+- Tipo de evento de cada parada.
+- "Mis eventos": lista de los eventos almacenados con su tipo, y permite eliminarlos.
+
+### Panel "Zoom"
+- Ajuste fino de la escala del mapa.
+
+### Simulación
+- Se muestran: progreso, velocidad actual (varía alrededor de la velocidad media elegida), estado de EE. UU. en el que está el móvil y población dentro del buffer.
+- El trazo se colorea según la velocidad, y se resaltan los condados que el buffer intersecta.
+- Al pasar de un estado a otro, se marca el punto en el mapa con el nombre del nuevo estado.
+- Al finalizar o detener se muestra un resumen: distancia recorrida, velocidad promedio, población media, lecturas realizadas y estados visitados.
+
+## Limitaciones
+
+- Los servicios de Esri de ejemplo (eventos y rutas) son compartidos y pueden vaciarse o no estar disponibles.
+- La población se reparte de forma uniforme dentro de cada condado.
+- La velocidad es simulada: no representa tráfico real.
