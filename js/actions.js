@@ -1,6 +1,7 @@
 import { estado, setRutaActual } from "./state.js";
 import { guardarEventos, borrarEventosPorIds } from "./events.js";
-import { guardarRuta, obtenerRutaGuardada, cargarParadasEnComponente } from "./routes.js";
+import { guardarRuta, obtenerRutaGuardada, cargarParadasEnComponente, nombreSugerido } from "./routes.js";
+import { $ } from "./ui.js"
 
 const [Graphic, Stop] = await $arcgis.import([
   "@arcgis/core/Graphic.js",  
@@ -42,6 +43,8 @@ function descartarCambios({ routeLayer, capaActiva }) {
 }
 
 function nuevaRuta({ routeLayer, capaActiva }) {
+  const lista = $("#lista-tipos");
+  lista.style.display = "none";
   estado.cargando = true;
   routeLayer.stops.removeAll();
   routeLayer.stops.addMany([ new Stop(), new Stop()]); // dos paradas sin ubicacion
@@ -52,15 +55,17 @@ function nuevaRuta({ routeLayer, capaActiva }) {
 
 async function guardarComoNueva({ routeLayer, trailsLayer, eventosLayer, capaActiva }) {
   const r = estado.rutaActual;
-  const nombre = prompt("Nombre de la ruta:", r.nombre);
+
+  const nombre = (prompt("Nombre de la ruta:", nombreSugerido(r.paradas)) ?? "").replace(/[|,]/g, " ").trim();
   if (!nombre) return;            // el usuario canceló
-  r.nombre = nombre.replace(/[|,]/g, " ");   // el carácter | rompe el formato de notes
+  r.nombre = nombre;
+
   if (!r || r.origen !== "calculada") throw new Error("No hay una ruta nueva para guardar.");
   if (r.paradas.length < 2) throw new Error("Hacen falta al menos dos paradas.");
 
   let idsEventos = [];
   try {
-    idsEventos = await guardarEventos(routeLayer, eventosLayer);            // 1° los eventos (dan los ids)
+    idsEventos = await guardarEventos(r.paradas, eventosLayer);            // 1° los eventos (dan los ids)
     const idRuta = await guardarRuta(r, idsEventos, trailsLayer);         // 2° la ruta, que los referencia
 
     // Se recarga desde el servicio: pasa a ser una ruta guardada, con su geometría completa

@@ -32,7 +32,7 @@ async function analizarPosicion(centro, radioKm, { condadosLayer, campos }) {
   const res = await condadosLayer.queryFeatures({
     geometry: bufer, spatialRelationship: "intersects",
     outFields: [idCampo, campos.nombre, campos.estado, campos.poblacion],
-    returnGeometry: true, outSR: { wkid: 4326 },
+    returnGeometry: true, outSR: { wkid: 4326 }, maxAllowableOffset: 0.01,
   });
   const feats = res.features;
   if (feats.length === 0) return { buffer: bufer, condados: [], poblacionTotal: 0 };

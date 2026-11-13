@@ -8,6 +8,10 @@ const [Graphic, Polyline, webMercatorUtils, Stop] = await $arcgis.import([
   "@arcgis/core/rest/support/Stop.js",
 ]);
 
+function nombreSugerido(paradas) {
+  return "Ruta: " + paradas.map((p) => (p.nombre ?? "").split(",")[0].trim()).filter(Boolean).join(" - ");
+}
+
 async function guardarRuta(ruta, idsEventos, trailsLayer) {
   // Web Mercator -> grados, y solo x,y (la capa no admite Z ni M)
   const geo = webMercatorUtils.webMercatorToGeographic(ruta.polilinea);
@@ -16,7 +20,10 @@ async function guardarRuta(ruta, idsEventos, trailsLayer) {
     spatialReference: { wkid: 4326 },
   });
 
-  const notes = `${ruta_prefix}|${ruta.nombre.slice(0, 40)}|${idsEventos.join(",")}`;
+  const ids = idsEventos.join(",");
+  const maxNombre = 255 - (ruta_prefix.length + 2 + ids.length);
+  if (maxNombre < 5) throw new Error("La ruta tiene demasiados eventos para guardarla");
+  const notes = `${ruta_prefix}|${ruta.nombre.slice(0, maxNombre)}|${ids}`;
   if (notes.length > 255) throw new Error("La ruta tiene demasiados eventos para el campo notes.");
 
   let resultado;
@@ -100,7 +107,7 @@ function rutaDesdeComponente(routeLayer, nombre = "Ruta nueva") {
     .map((p) => ({
       idEvento: null,                               // todavía no es un evento guardado
       nombre: p.name,
-      tipoEvento: 5,                                // TODO: el que elija el usuario
+      tipoEvento: p.tipoEvento,                                // TODO: el que elija el usuario
       geometria: p.geometry,
     }));
   if (paradas.length < 2) return null;
@@ -111,4 +118,4 @@ function rutaDesdeComponente(routeLayer, nombre = "Ruta nueva") {
 }
 
 
-export { guardarRuta, cargarParadasEnComponente, obtenerRutaGuardada, rutaDesdeComponente };
+export { guardarRuta, cargarParadasEnComponente, obtenerRutaGuardada, rutaDesdeComponente, nombreSugerido };

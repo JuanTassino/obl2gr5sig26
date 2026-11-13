@@ -3,3 +3,7 @@ body {
   height: 100%;
   margin: 0;
 }
+
+.contenido {
+  padding: 8px 10px; display: flex; flex-direction: column; gap: 8px;
+}

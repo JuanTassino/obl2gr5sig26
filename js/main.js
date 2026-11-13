@@ -1,19 +1,20 @@
 import { obtenerRutaGuardada, cargarParadasEnComponente, rutaDesdeComponente } from "./routes.js";
-import { borrarPropios } from "./delete.js";
-import { eventos_url, trails_url, event_id, ruta_prefix, campos, county_url, radio_km } from "./const.js";
+import { eventos_url, trails_url, event_id, ruta_prefix, campos, county_url, colores_type } from "./const.js";
 import { estado, setRutaActual, setModo } from "./state.js";
 import { ejecutarSimulacion } from "./simulate.js";
-import { avisar, control, aplicarTipoSeleccionado, iniciarUI } from "./ui.js";
+import { avisar, control, iniciarUI, mostrarResumen, prepararPanelSim } from "./ui.js";
 import { analizarPosicion, estadoEn, dibujarAnalisis} from "./analisis.js";
 import { guardarComoNueva, mostrarRutaActiva } from "./actions.js";
+import { exportarPDF } from "./print.js";
+import { paradasFueraDeEEUU, mismasParadas } from "./validation.js";
 
-const [RouteLayer, Basemap, TileLayer, FeatureLayer, GraphicsLayer, Graphic] = await $arcgis.import([
+const [RouteLayer, Basemap, TileLayer, FeatureLayer, GraphicsLayer, reactiveUtils] = await $arcgis.import([
   "@arcgis/core/layers/RouteLayer.js",
   "@arcgis/core/Basemap.js",
   "@arcgis/core/layers/TileLayer.js",
   "@arcgis/core/layers/FeatureLayer.js",
   "@arcgis/core/layers/GraphicsLayer.js",
-  "@arcgis/core/Graphic.js",
+  "@arcgis/core/core/reactiveUtils.js",
 ]);
 
 const viewElement = document.querySelector("arcgis-map");
@@ -46,10 +47,6 @@ const condadosLayer = new FeatureLayer({
 });
 condadosLayer.opacity = 0.2;
 
-const tipos = {
-  5: { nombre: "Otro", color: "#78909c" },
-};
-
 const simbolo = (color) => ({
   type: "simple-marker", style: "circle", size: 9, color,
   outline: { color: "white", width: 1 },
@@ -59,10 +56,12 @@ eventosLayer.renderer = {
   type: "unique-value",
   field: "event_type",
   defaultSymbol: simbolo("#78909c"),
-  uniqueValueInfos: Object.entries(tipos).map(([valor, t]) => ({
+  uniqueValueInfos: Object.entries(colores_type).map(([valor, t]) => ({
     value: Number(valor), label: t.nombre, symbol: simbolo(t.color),
   })),
 };
+
+window.estado = estado;
 
 const routeLayer = new RouteLayer({  
     defaultSymbols: {
@@ -79,6 +78,18 @@ const trailsLayer = new FeatureLayer({
 });
 
 await viewElement.viewOnReady();
+
+const sliderZoom = document.querySelector("#inp-zoom");
+viewElement.view.constraints.snapToZoom = false;       // zoom continuo, también con la rueda
+
+sliderZoom.addEventListener("calciteSliderInput", () => {
+  viewElement.view.goTo({ zoom: Number(sliderZoom.value) }, { animate: false }).catch(() => {});
+});
+// mapa -> barra (rueda del mouse, botones, etc.)
+reactiveUtils.watch(() => viewElement.view.zoom, (z) => {
+  if (z > 0 && Math.abs(Number(sliderZoom.value) - z) > 0.05) sliderZoom.value = z;
+});
+
 await directionsElement.componentOnReady();
 await routeLayer.load();
 
@@ -89,20 +100,19 @@ viewElement.map.add(routeLayer);
 viewElement.map.add(trailsLayer);
 viewElement.map.add(eventosLayer);
 
-const capaHover = new GraphicsLayer();
 const capaActiva = new GraphicsLayer();
 const capaRecorrido = new GraphicsLayer();
 const capaMovil = new GraphicsLayer();
 const capaAnalisis = new GraphicsLayer();
 
 // Se agregan DESPUÉS de trailsLayer y eventosLayer, para que queden arriba
-viewElement.map.addMany([capaHover, capaActiva]);
+viewElement.map.add(capaActiva);
 
 // Se agregan capas de recorrido, movil y analisis
 viewElement.map.add(capaAnalisis);
 viewElement.map.addMany([capaMovil, capaRecorrido]);
 
-const deps = { routeLayer, trailsLayer, eventosLayer, capaActiva };
+const deps = { viewElement, directionsElement, routeLayer, trailsLayer, eventosLayer, capaActiva };
 
 iniciarUI(deps);
 
@@ -124,30 +134,32 @@ document.querySelector("#btn-iniciar").addEventListener("click", async () => {
 
     document.querySelector("#btn-detener").onclick = () => (control.detenido = true);
     document.querySelector("#panel-sim").style.display = "block";
-
+    prepararPanelSim();
     // 4. Correr la simulación
-    await ejecutarSimulacion({
+    const resumen = await ejecutarSimulacion({
       ruta: estado.rutaActual,
       capas: { recorrido: capaRecorrido, movil: capaMovil, analisis: capaAnalisis },
       analizar: (centro, radioKm) => analizarPosicion(centro, radioKm, { condadosLayer, campos }),
       estadoEn: (centro) => estadoEn(centro, condadosLayer, campos.estado),
-      control,    // el importado de ui.js
       alCambiar: (d) => {
         $("#sim-progreso").textContent = `${Math.round(d.progreso * 100)} %`;
-        $("#sim-barra").value = d.progreso;
+        $("#sim-barra").value = Math.round(d.progreso * 100);
         $("#sim-velocidad").textContent = d.velocidad.toFixed(0);
         $("#sim-estado").textContent = d.estado ?? "-";
         dibujarAnalisis(capaAnalisis, d.resultado);
         $("#sim-poblacion").textContent =
           d.resultado ? d.resultado.poblacionTotal.toLocaleString("es") : "sin datos";
       },
+      control,    // el importado de ui.js
     });
+    if (resumen) mostrarResumen(resumen);
   } catch (error) {
     console.error(error);
     avisar(error.message);
+    document.querySelector("#panel-sim").style.display = "none";
   } finally {
     // 5. Al terminar, al detener o si algo falla, se vuelve a edición
-    document.querySelector("#panel-sim").style.display = "none";
+    //document.querySelector("#panel-sim").style.display = "none";
     setModo("edicion");
   }
 });
@@ -175,7 +187,14 @@ viewElement.addEventListener("arcgisViewClick", async (event) => {
     const ruta = await obtenerRutaGuardada(id, { trailsLayer, eventosLayer });
 
     cargarParadasEnComponente(ruta.paradas, routeLayer);
-    mostrarRutaActiva(capaActiva, ruta)
+    mostrarRutaActiva(capaActiva, ruta);
+
+    const fuera = await paradasFueraDeEEUU(ruta.paradas, condadosLayer);
+    if (fuera.length) {
+      avisar("Estas paradas no están en EE.UU.: " + fuera.map((p) => p.nombre).join("; "));
+      ruta.invalida = true
+    }
+
     setRutaActual(ruta);
 
   } catch (error) {
@@ -185,16 +204,46 @@ viewElement.addEventListener("arcgisViewClick", async (event) => {
   }
 });
 
-directionsElement.addEventListener("arcgisPropertyChange", (e) => {
-  if (e.detail.name !== "lastRoute" || estado.cargando) return;
+directionsElement.addEventListener("arcgisPropertyChange", async (e) => {
+  if (e.detail.name !== "lastRoute" || estado.modo !== "edicion") return;
 
   const nueva = rutaDesdeComponente(routeLayer);
   if (!nueva) return;
 
   const previa = estado.rutaActual;
-  // La ruta guardada de la que se partió (si la hay), para poder descartar cambios
-  nueva.base = previa?.origen === "guardada" ? previa : previa?.base ?? null;
+  if (previa && mismasParadas(previa.paradas, nueva.paradas)) return;
+
+  // 1) conservar los tipos ya elegidos
+  nueva.paradas.forEach((p) => {
+    const prev = previa?.paradas.find((q) =>
+      Math.hypot(q.geometria.x - p.geometria.x, q.geometria.y - p.geometria.y) < 150);
+    if (prev) p.tipoEvento = prev.tipoEvento;
+  });
+
+  // 2) chequeo de EE. UU.
+  const fuera = await paradasFueraDeEEUU(nueva.paradas, condadosLayer);
+  if (fuera.length) {
+    avisar("Estas paradas no están en EE. UU.: " + fuera.map((p) => p.nombre).join("; "));
+    nueva.invalida = true;
+  }
 
   mostrarRutaActiva(capaActiva, nueva);
   setRutaActual(nueva);
+});
+
+document.querySelector("#btn-pdf").addEventListener("click", async () => {
+  const btn = $("#btn-pdf");
+  btn.loading = true;
+  try {
+    const url = await exportarPDF(deps.viewElement.view, estado.rutaActual?.nombre ?? "Mapa");
+    const enlace = $("#enlace-pdf");
+    enlace.href = url;
+    enlace.style.display = "";
+    window.open(url, "_blank");        // el navegador puede bloquearlo: por eso el enlace
+  } catch (e) {
+    console.error(e);
+    avisar("No se pudo generar el PDF: " + e.message);
+  } finally {
+    btn.loading = false;
+  }
 });

@@ -14,18 +14,41 @@
   <body>
     <arcgis-map center="-98, 39" zoom="5">
 
-      <arcgis-directions slot="top-right"></arcgis-directions>
+      <arcgis-directions clsas ="contenido" slot="top-right"></arcgis-directions>
 
-      <calcite-panel slot="bottom-right" heading="Ruta" style="width:220px">
-        <div style="padding:12px; display:flex; flex-direction:column; gap:8px;">
-          <calcite-button id="btn-guardar" width="full">Guardar como nueva</calcite-button>
-          <calcite-button id="btn-descartar" width="full" appearance="outline" kind="neutral">Descartar modificaciones</calcite-button>
-          <calcite-button id="btn-nueva" width="full" appearance="outline" kind="neutral">Limpiar ruta y paradas</calcite-button>
-          <calcite-button id="btn-iniciar" width="full">Iniciar simulación</calcite-button>
+      <calcite-panel slot="bottom-right" heading="Ruta" style="width:200px">
+        <div class="contenido">
+          <calcite-button id="btn-guardar" width="full" scale ="s">Guardar como nueva</calcite-button>
+          <calcite-button id="btn-descartar" width="full" appearance="outline" kind="neutral" scale ="s">Descartar modificaciones</calcite-button>
+          <calcite-button id="btn-nueva" width="full" appearance="outline" kind="neutral" scale ="s">Limpiar ruta y paradas</calcite-button>
+          <calcite-button id="btn-iniciar" width="full" scale ="s">Iniciar simulación</calcite-button>
+          <calcite-button id="btn-pdf" width="full" appearance="outline" kind="neutral" scale ="s">Exportar a PDF</calcite-button>
+          <calcite-link id="enlace-pdf" target="_blank" style="display:none" scale ="s">Abrir PDF generado</calcite-link>
         </div>
       </calcite-panel>
     
-      <calcite-panel id="panel-sim" slot="bottom-left" heading="Simulación en curso" style="width:280px; display:none">
+
+      <calcite-panel id="panel-sim" slot="top-right" heading="Simulación en curso" style="width:280px; display:none" scale ="s">
+        <div class="contenido">
+          <calcite-progress scale ="s" id="sim-barra" type="determinate" value="0" ></calcite-progress>
+          <div scale ="s" id ="fila-progreso">Avance: <b id="sim-progreso">-</b></div>
+          <div scale ="s" id ="fila-velocidad">Velocidad: <b id="sim-velocidad">-</b> km/h</div>
+          <div scale ="s" id="fila-estado">Estado: <b id="sim-estado">-</b></div>
+          <div scale ="s" id="fila-poblacion">Población en el buffer: <b id="sim-poblacion">-</b></div>
+
+          <div id="sim-resumen" style="display:none; flex-direction:column; gap:4px;">
+            <div scale ="s">Distancia recorrida: <b id="res-km">-</b> km</div>
+            <div scale ="s">Velocidad promedio: <b id="res-vel">-</b> km/h</div>
+            <div scale ="s">Lecturas analizadas: <b id="res-lecturas">-</b></div>
+            <div scale ="s">Estados recorridos: <b id="res-estados">-</b></div>
+          </div>
+
+          <calcite-button id="btn-detener" kind="danger" width="full">Detener</calcite-button>
+          <calcite-button id="btn-cerrar-resumen" width="full" style="display:none">Cerrar resumen</calcite-button>
+        </div>
+      </calcite-panel>
+
+      <!-- /<calcite-panel id="panel-sim" slot="bottom-left" heading="Simulación en curso" style="width:280px; display:none"> 
         <div style="padding:12px; display:flex; flex-direction:column; gap:8px;">
           <calcite-progress id="sim-barra" type="determinate" value="0"></calcite-progress>
           <div>Avance: <b id="sim-progreso">-</b></div>
@@ -34,33 +57,42 @@
           <div>Población en el buffer: <b id="sim-poblacion">-</b></div>
           <calcite-button id="btn-detener" kind="danger" width="full">Detener</calcite-button>
         </div>
-      </calcite-panel>
+      </calcite-panel>-->
 
-      <calcite-panel slot="top-left" heading="Configuración" style="width:260px">
-        <div style="padding:12px; display:flex; flex-direction:column; gap:12px;">
-          <calcite-label>Radio del buffer (km)
-            <calcite-slider id="inp-radio" min="5" max="100" value="30" step="5" snap label-handles></calcite-slider>
+      <!--<calcite-panel slot="top-left" heading="Configuración" style="width:260px">
+          <div style="padding:8px; display:flex; flex-direction:column; gap:12px;"> -->
+      <calcite-panel id="panel-config" slot="top-left" heading="Configuración"
+               style="width:230px; max-height: calc(100vh - 160px);">
+        <div class="contenido">
+          <calcite-label scale ="s">Radio del buffer (km)
+            <calcite-slider scale ="s" id="inp-radio" min="5" max="100" value="30" step="5" snap label-handles></calcite-slider>
           </calcite-label>
-          <calcite-label>Velocidad media (km/h)
-            <calcite-slider id="inp-vel" min="30" max="130" value="80" step="5" snap label-handles></calcite-slider>
+          <calcite-label scale ="s">Velocidad media (km/h)
+            <calcite-slider scale ="s" id="inp-vel" min="30" max="130" value="80" step="5" snap label-handles></calcite-slider>
           </calcite-label>
-          <calcite-label>Aceleración
-            <calcite-select id="sel-acel">
+          <calcite-label scale ="s">Aceleración
+            <calcite-select id="sel-acel" scale ="s">
               <calcite-option value="200">x200</calcite-option>
               <calcite-option value="1000" selected>x1000</calcite-option>
               <calcite-option value="5000">x5000</calcite-option>
             </calcite-select>
-          </calcite-label>
-          <calcite-label>Tipo de evento
-            <calcite-select id="sel-tipo">
-              <calcite-option value="0">Festival de arte</calcite-option>
-              <calcite-option value="1">Feria de productores</calcite-option>
-              <calcite-option value="2">Noche de cine</calcite-option>
-              <calcite-option value="3">Feria</calcite-option>
-              <calcite-option value="4">Desfile</calcite-option>
-              <calcite-option value="5" selected>Otro</calcite-option>
-            </calcite-select>
-          </calcite-label>
+          </calcite-label> 
+
+          <div id="lista-tipos" style="height: 220px; overflow-y: scroll; display: none;"></div>
+
+          <calcite-block heading="Mis eventos" collapsible>
+            <calcite-button id="btn-refrescar-eventos" width="full" appearance="outline" scale ="s">Actualizar lista</calcite-button>
+            <div id="contenedor-eventos" style="height: 220px; overflow-y: scroll; display: none">
+              <calcite-list id="lista-eventos" scale ="s"></calcite-list>
+            </div>
+          </calcite-block>
+
+        </div>
+      </calcite-panel>
+
+      <calcite-panel slot="bottom-right" heading="Zoom" style="width:150px">
+        <div class="contenido">
+          <calcite-slider id="inp-zoom" min="3" max="15" value="4" step="0.25" label-handles scale ="s"></calcite-slider>
         </div>
       </calcite-panel>
 

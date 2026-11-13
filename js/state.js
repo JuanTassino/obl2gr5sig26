@@ -25,6 +25,7 @@ function crearRuta({ origen, idRuta = null, nombre, paradas, polilinea }) {
     modificada: false,
     original: { paradas: [...paradas], polilinea },   // para "descartar cambios"
     base: null,
+    invalida: false,
   };
 }
 

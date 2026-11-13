@@ -1,6 +1,7 @@
 // simulate.js
 import { crearRecorrido } from "./trace.js";
 import { crearModeloVelocidad, colorPorVelocidad } from "./speed.js";
+import { max_lecturas } from "./const.js";
 
 const [Graphic, Point, Polyline] = await $arcgis.import([
   "@arcgis/core/Graphic.js",
@@ -16,6 +17,10 @@ export async function ejecutarSimulacion({ ruta, capas, analizar, estadoEn, alCa
   let d = 0;     // km recorridos
   let i = 0;     // número de lectura
 
+  control.detenido = false;
+  let sumaVel = 0;
+  const estadosVisitados = new Set();
+
   capas.recorrido.removeAll();
   capas.movil.removeAll();
   capas.analisis.removeAll();
@@ -23,8 +28,12 @@ export async function ejecutarSimulacion({ ruta, capas, analizar, estadoEn, alCa
   while (d < rec.totalKm && !control.detenido) {
     const inicio = performance.now();
     const dPrev = d;
-    const radio = control.radioKm;                       // se lee en cada vuelta
-    d = Math.min(rec.totalKm, d + radio * 1.5);          // un análisis cada 1,5 radios
+    const radio = control.radioKm;    
+    
+    const paso = Math.max(radio * 1.5, rec.totalKm / max_lecturas); // el paso es el radio*1.5 o el total/80 
+
+    // se lee en cada vuelta
+    d = Math.min(rec.totalKm, d + paso); // un análisis dependiendo del paso calculado
     i++;
     const v = modelo(control.velocidadMedia);
     const actual = rec.puntoEn(d);
@@ -68,6 +77,8 @@ export async function ejecutarSimulacion({ ruta, capas, analizar, estadoEn, alCa
       }));
     }
     estadoPrevio = estado;
+    sumaVel += v;
+    if (estado) estadosVisitados.add(estado);
 
     // 4) Panel y buffer (el dibujo del buffer se hace en alCambiar, justo ahora)
     alCambiar({ i, progreso: d / rec.totalKm, velocidad: v, posicion: actual, estado, resultado });
@@ -76,4 +87,11 @@ export async function ejecutarSimulacion({ ruta, capas, analizar, estadoEn, alCa
     const objetivoMs = ((d - dPrev) / v) * 3600 * 1000 / control.aceleracion;
     await esperar(Math.max(0, objetivoMs - (performance.now() - inicio)));
   }
+  return {
+    completada: d >= rec.totalKm && !control.detenido,
+    km: d,
+    lecturas: i,
+    velocidadMedia: i ? sumaVel / i : 0,
+    estados: [...estadosVisitados],
+  };
 }
