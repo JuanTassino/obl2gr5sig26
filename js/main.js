@@ -130,8 +130,6 @@ document.querySelector("#btn-iniciar").addEventListener("click", async () => {
     setModo("simulacion");
 
     // 3. Panel y control de "Detener"
-    //const control = { detenido: false };
-
     document.querySelector("#btn-detener").onclick = () => (control.detenido = true);
     document.querySelector("#panel-sim").style.display = "block";
     prepararPanelSim();
@@ -159,7 +157,6 @@ document.querySelector("#btn-iniciar").addEventListener("click", async () => {
     document.querySelector("#panel-sim").style.display = "none";
   } finally {
     // 5. Al terminar, al detener o si algo falla, se vuelve a edición
-    //document.querySelector("#panel-sim").style.display = "none";
     setModo("edicion");
   }
 });
@@ -212,6 +209,7 @@ directionsElement.addEventListener("arcgisPropertyChange", async (e) => {
 
   const previa = estado.rutaActual;
   if (previa && mismasParadas(previa.paradas, nueva.paradas)) return;
+  estado.base = estado.rutaActual;
 
   // 1) conservar los tipos ya elegidos
   nueva.paradas.forEach((p) => {

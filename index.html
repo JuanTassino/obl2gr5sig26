@@ -14,7 +14,7 @@
   <body>
     <arcgis-map center="-98, 39" zoom="5">
 
-      <arcgis-directions clsas ="contenido" slot="top-right"></arcgis-directions>
+      <arcgis-directions scale ="s" slot="top-right"></arcgis-directions>
 
       <calcite-panel slot="bottom-right" heading="Ruta" style="width:200px">
         <div class="contenido">
@@ -39,6 +39,7 @@
           <div id="sim-resumen" style="display:none; flex-direction:column; gap:4px;">
             <div scale ="s">Distancia recorrida: <b id="res-km">-</b> km</div>
             <div scale ="s">Velocidad promedio: <b id="res-vel">-</b> km/h</div>
+            <div scale ="s">Poblacion media: <b id="res-poblacion">-</b></div>
             <div scale ="s">Lecturas analizadas: <b id="res-lecturas">-</b></div>
             <div scale ="s">Estados recorridos: <b id="res-estados">-</b></div>
           </div>
@@ -48,19 +49,6 @@
         </div>
       </calcite-panel>
 
-      <!-- /<calcite-panel id="panel-sim" slot="bottom-left" heading="Simulación en curso" style="width:280px; display:none"> 
-        <div style="padding:12px; display:flex; flex-direction:column; gap:8px;">
-          <calcite-progress id="sim-barra" type="determinate" value="0"></calcite-progress>
-          <div>Avance: <b id="sim-progreso">-</b></div>
-          <div>Velocidad: <b id="sim-velocidad">-</b> km/h</div>
-          <div>Estado: <b id="sim-estado">-</b></div>
-          <div>Población en el buffer: <b id="sim-poblacion">-</b></div>
-          <calcite-button id="btn-detener" kind="danger" width="full">Detener</calcite-button>
-        </div>
-      </calcite-panel>-->
-
-      <!--<calcite-panel slot="top-left" heading="Configuración" style="width:260px">
-          <div style="padding:8px; display:flex; flex-direction:column; gap:12px;"> -->
       <calcite-panel id="panel-config" slot="top-left" heading="Configuración"
                style="width:230px; max-height: calc(100vh - 160px);">
         <div class="contenido">

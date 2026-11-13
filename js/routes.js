@@ -107,7 +107,7 @@ function rutaDesdeComponente(routeLayer, nombre = "Ruta nueva") {
     .map((p) => ({
       idEvento: null,                               // todavía no es un evento guardado
       nombre: p.name,
-      tipoEvento: p.tipoEvento,                                // TODO: el que elija el usuario
+      tipoEvento: p.tipoEvento ? p.tipoEvento : 5,                                // TODO: el que elija el usuario
       geometria: p.geometry,
     }));
   if (paradas.length < 2) return null;

@@ -34,7 +34,7 @@ function iniciarUI(deps) {
     const r = e.rutaActual;
     const edicion = e.modo === "edicion";
     btnGuardar.disabled = !(edicion && r?.origen === "calculada" && !r.invalida);
-    btnDescartar.disabled = !(edicion && r?.base);
+    btnDescartar.disabled = !(edicion && e.base && r?.origen === "calculada");
     btnNueva.disabled = !edicion;
     btnIniciar.disabled = !(edicion && r && !r.invalida);
   };
@@ -50,7 +50,6 @@ function iniciarUI(deps) {
     btnGuardar.disabled = true;
     try {
       await guardarComoNueva(deps);
-      avisar("Ruta guardada.");
     } catch (e) {
       console.error(e);
       avisar("No se pudo guardar: " + e.message);
@@ -82,6 +81,7 @@ function dibujarTipos(r) {
       const op = document.createElement("calcite-option");
       op.value = valor; op.textContent = texto;
       if (Number(valor) === p.tipoEvento) op.selected = true;
+      if (p.tipoEvento === null && Number(valor) === 5) op.selected = true;
       sel.appendChild(op);
     });
     sel.addEventListener("calciteSelectChange", () => (p.tipoEvento = Number(sel.value)));
@@ -130,6 +130,7 @@ function prepararPanelSim() {
   $("#fila-velocidad").style.display = "";
   $("#fila-progreso").style.display = "";
   $("#fila-estado").style.display = "";
+  $("#sim-barra").style.display = "";
 }
 
 function mostrarResumen(r) {
@@ -142,6 +143,7 @@ function mostrarResumen(r) {
   $("#btn-detener").style.display = "none";
   $("#res-km").textContent = r.km.toFixed(0);
   $("#res-vel").textContent = r.velocidadMedia.toFixed(0);
+  $("#res-poblacion").textContent = r.poblacionMedia.toLocaleString("es");
   $("#res-lecturas").textContent = r.lecturas;
   $("#res-estados").textContent = r.estados.join(" → ") || "-";
   $("#sim-resumen").style.display = "flex";

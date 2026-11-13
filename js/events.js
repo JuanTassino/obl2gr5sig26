@@ -25,11 +25,10 @@ function paradaAGraphic(parada, indice) {
     longitude: parada.geometria.longitude,
     latitude: parada.geometria.latitude,
   });
-
   return new Graphic({
     geometry: punto,
     attributes: {
-      description: (parada.name ?? `Parada ${indice+1}`).slice(0,50),
+      description: (parada.nombre ?? `Parada ${indice+1}`).slice(0,50),
       event_type: parada.tipoEvento,
       eventid: event_id,
       eventdate: Date.now(),
@@ -44,7 +43,7 @@ async function borrarEventosPorIds(ids) {
 async function eventosPropios(eventosLayer) {
   const idCampo = eventosLayer.objectIdField;
   const r = await eventosLayer.queryFeatures({
-    where: "1=1", outFields: ["*"], returnGeometry: false, orderByFields: [`${idCampo} DESC`],
+    where: `eventid = ${event_id} and 1=1`, outFields: ["*"], returnGeometry: false, orderByFields: [`${idCampo} DESC`], 
   });
   return r.features.map((f) => ({ id: f.attributes[idCampo], nombre: f.attributes.description, tipo: f.attributes.event_type }));
 }

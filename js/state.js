@@ -2,6 +2,7 @@ const estado = {
   modo: "edicion",      // "edicion" | "simulacion"
   cargando: false,      // true mientras carga paradas por código
   rutaActual: null,
+  base: null,
 };
 
 const oyentes = [];
@@ -24,7 +25,6 @@ function crearRuta({ origen, idRuta = null, nombre, paradas, polilinea }) {
     polilinea,                      // en Web Mercator
     modificada: false,
     original: { paradas: [...paradas], polilinea },   // para "descartar cambios"
-    base: null,
     invalida: false,
   };
 }

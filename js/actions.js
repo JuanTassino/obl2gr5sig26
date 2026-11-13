@@ -1,7 +1,7 @@
 import { estado, setRutaActual } from "./state.js";
 import { guardarEventos, borrarEventosPorIds } from "./events.js";
 import { guardarRuta, obtenerRutaGuardada, cargarParadasEnComponente, nombreSugerido } from "./routes.js";
-import { $ } from "./ui.js"
+import { $ , avisar} from "./ui.js"
 
 const [Graphic, Stop] = await $arcgis.import([
   "@arcgis/core/Graphic.js",  
@@ -33,9 +33,10 @@ function mostrarRutaActiva(capaActiva, ruta) {
 }
 
 function descartarCambios({ routeLayer, capaActiva }) {
-  const base = estado.rutaActual?.base;
+  const base = estado?.base;
   if (!base) return;
   estado.cargando = true;
+  estado.base = null;
   cargarParadasEnComponente(base.paradas, routeLayer);
   mostrarRutaActiva(capaActiva, base);
   setRutaActual(base);
@@ -74,6 +75,7 @@ async function guardarComoNueva({ routeLayer, trailsLayer, eventosLayer, capaAct
     eventosLayer.refresh();
     mostrarRutaActiva(capaActiva, guardada);
     setRutaActual(guardada);
+    avisar("Ruta guardada.");
   } catch (error) {
     // Si la ruta falló pero los eventos ya se habían guardado, se deshacen para no dejarlos huérfanos
     if (idsEventos.length > 0) {

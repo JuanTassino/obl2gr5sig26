@@ -16,6 +16,7 @@ export async function ejecutarSimulacion({ ruta, capas, analizar, estadoEn, alCa
   let estadoPrevio = null;
   let d = 0;     // km recorridos
   let i = 0;     // número de lectura
+  let sumaPobl = 0;
 
   control.detenido = false;
   let sumaVel = 0;
@@ -83,6 +84,7 @@ export async function ejecutarSimulacion({ ruta, capas, analizar, estadoEn, alCa
     // 4) Panel y buffer (el dibujo del buffer se hace en alCambiar, justo ahora)
     alCambiar({ i, progreso: d / rec.totalKm, velocidad: v, posicion: actual, estado, resultado });
 
+    sumaPobl += resultado.poblacionTotal;
     // 5) Pausa: tiempo simulado del tramo, acelerado, menos lo que ya tardó el análisis
     const objetivoMs = ((d - dPrev) / v) * 3600 * 1000 / control.aceleracion;
     await esperar(Math.max(0, objetivoMs - (performance.now() - inicio)));
@@ -93,5 +95,6 @@ export async function ejecutarSimulacion({ ruta, capas, analizar, estadoEn, alCa
     lecturas: i,
     velocidadMedia: i ? sumaVel / i : 0,
     estados: [...estadosVisitados],
+    poblacionMedia: i ? sumaPobl / i : 0,
   };
 }
